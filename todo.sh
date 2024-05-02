@@ -589,7 +589,14 @@ None of the option take an argument.\n\
     -c, --create          Gather the information from the user to create the task.\n\
     -u, --update          Gather the information from the user to update a task.\n\
     -i, --info            Show information about a task.\n\
-    -s, --show            Show All the completed and uncompleted task of a given day.\n"
+    -s, --show            Show All the completed and uncompleted task of a given day.\n\n\
+The shell have to be in full screen to display correctly the output.\n\
+The comma usage is inadequate as the program is not optimized for their implementation.\n\n\
+Exit status:\n\
+ 0, if OK,\n\
+ 1, if an error occured.\n\
+ If any bug occurs report it to me\n"
+ 
         ;; 
     *)
         # If an invalid option is provided
