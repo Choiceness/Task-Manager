@@ -533,7 +533,6 @@ echo "                                        6- Quit."
             "4")
                 clear
                 ShowTaskInfo
-                read -s
                 ;;
             "5")
                 clear
@@ -582,7 +581,15 @@ case "$1" in
         ShowAllTask "$(date +"%Y-%m-%d")"
         ;;
     "--help"|"-h")
-        echo "Usage"
+        echo -e "Usage: todo [Option]\n\
+Manage your task in a csv file with this command.\n\
+Show completed task and uncompleted task if any of the option is specified.\n\n\
+None of the option take an argument.\n\
+    -m, --menu            Show you the menu that helps you manage your tasks.\n\
+    -c, --create          Gather the information from the user to create the task.\n\
+    -u, --update          Gather the information from the user to update a task.\n\
+    -i, --info            Show information about a task.\n\
+    -s, --show            Show All the completed and uncompleted task of a given day.\n"
         ;; 
     *)
         # If an invalid option is provided
