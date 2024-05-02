@@ -17,7 +17,7 @@ You can add directly the file to `/bin` so you can use it directly like this `to
 You can check the `-h` or `--help` option to know more about the script.
 You can manage you task manually with `-m` or `--menu` option :
 
-![Image](Menu todo.png)
+![Image](Menu_todo.png)
 
 You can use the command without argument to show the completed and uncompleted task.
 
