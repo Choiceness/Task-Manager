@@ -21,6 +21,7 @@ You can manage you task manually with `-m` or `--menu` option :
 
 You can use the command without argument to show the completed and uncompleted task.
 
+---
 ## Contributing
 
 Pull requests are welcome !
