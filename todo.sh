@@ -594,8 +594,8 @@ The shell have to be in full screen to display correctly the output.\n\
 The comma usage is inadequate as the program is not optimized for their implementation.\n\n\
 Exit status:\n\
  0, if OK,\n\
- 1, if an error occured.\n\
- If any bug occurs report it to me\n"
+ 1, if an error occured.\n\n\
+If any bug occurs report it to me\n"
  
         ;; 
     *)
