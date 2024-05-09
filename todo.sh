@@ -454,6 +454,9 @@ ShowAllTask() {
     uncompleted=$(awk -F ',' -v date="$Ndate" '$5 ~ "^" date && $6 != "Completed" {print $2}' ToDo.csv)
     
     merge=$(paste <(echo "$completed") <(echo "$uncompleted"))
+    # don't use tab as delimiter, it's bad, instead use another character like comma
+    # here, i am replacing tab with comma
+    merge=${merge//$'\t'/','}
 
     if [ -n "$completed" ] && [ -n "$uncompleted" ]; then
         set_style "bold" "blue"; echo "Tasks:"; set_style "bold" "cyan"
@@ -461,8 +464,10 @@ ShowAllTask() {
 +----------------------------------+----------------------------------+\n\
 | Completed Task                   | Uncompleted Task                 |\n\
 +----------------------------------+----------------------------------+"
-while IFS=$'\t' read -r completed uncompleted; do
-        printf "| %-32s | %-32s |\n" "$completed" "$uncompleted"
+# the delimiter here is a comma instead of a tab
+while IFS=',' read -r completed uncompleted; do
+        # make sure that comma is removed from variables
+        printf "| %-32s | %-32s |\n" "${completed//','/}" "${uncompleted//','/}"
 done <<< "$merge"
         echo -e "+----------------------------------+----------------------------------+\n"
         set_style "base"
