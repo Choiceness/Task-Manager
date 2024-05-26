@@ -93,7 +93,7 @@ Create () {
     # In case the Title is already in the file
     
     number=$(grep -o -E ",$Title[0-9]*," ToDo.csv | wc -l)
-    if [ ! "$number" -eq 1 ]; then        
+    if [ ! "$number" -eq 0 ]; then        
         set_style "sous" "red"; echo -e "$Title is already mentionned we will create a task named $Title$((number+1))" ; set_style "base"
         Title="$Title$((number+1))"
     fi
@@ -170,7 +170,7 @@ Update() {
                 set_style "bold" "blue"; echo "Enter the title of the task you want to update : "; set_style "base"
                 read -r Title
                 
-                info=$(grep "^[0-9]*,$search_title," ToDo.csv)
+                info=$(grep -i -m 1 -E "^[0-9]+,$Title" ToDo.csv)
 
                 if [ -z "$info" ]; then
                     set_style "bold" "red"; echo "The task cannot be found !!" ; set_style "base"
@@ -198,16 +198,16 @@ Update() {
 
     # Extractoing the task information
     
-    task_id=$(echo "$task_info" | cut -d ',' -f1)
-    task_title=$(echo "$task_info" | cut  -d ',' -f2)
-    task_description=$(echo "$task_info" | cut  -d ',' -f3)
-    task_location=$(echo "$task_info" | cut  -d ',' -f4)
-    task_due_time=$(echo "$task_info" | cut  -d ',' -f5)
-    task_completion=$(echo "$task_info" | cut  -d ',' -f6)
+    task_id=$(echo "$info" | cut -d ',' -f1)
+    task_title=$(echo "$info" | cut  -d ',' -f2)
+    task_description=$(echo "$info" | cut  -d ',' -f3)
+    task_location=$(echo "$info" | cut  -d ',' -f4)
+    task_due_time=$(echo "$info" | cut  -d ',' -f5)
+    task_completion=$(echo "$info" | cut  -d ',' -f6)
 
     # Prompt the user about the thing he want to update
     
-    set_style "bold" "blue"; echo "Do you want to update the task information or just the completion mark ? "; set_style "base"
+    set_style "bold" "blue"; echo "Do you want to update the task information or just the completion mark ? (All/Completion) "; set_style "base"
     read -r update_type
 
     # Update task information based on user choice
@@ -306,15 +306,15 @@ Delete () {
         case $method in
             "Title"|"title"|"TITLE") # If he choose the title
                 set_style "bold" "blue"; echo "Enter the title of the task you want to delete : "; set_style "base"
-                read -r $Title
-                task_info=$(sed -n "/^[0-9]*,$Title,/p" ToDo.csv)
+                read -r Title
+                task_info=$(grep -q -i -E "^.*,$Title," ToDo.csv)
                 if [ -z "$task_info" ]; then
                     set_style "bold" "red"; echo "The task with the title '$Title' couldn't be found ! " ; set_style "base"
                 else
                     set_style "bold" "blue"; echo "Are you sure you want to delete this task ? (Y/N)" ; set_style "base"
                     read -r confirm
                     if [ "$confirm" = "Y" ] || [ "$confirm" = "y" ]; then
-                        awk -v title="$Title" -F ',' '$2 != title' ToDo.csv > temp.csv
+                        grep -v -i -E "^.*,$Title," ToDo.csv > temp.csv
                         mv temp.csv ToDo.csv
 
                         # Useless part :x
@@ -331,7 +331,7 @@ Delete () {
 
                         set_style "bold" "green"; echo "Task deleted successfully ! " ; set_style "base"
                     else
-                        set_style "bold" "red"; echo "Task deletion cancelled."; set_style "base"
+                        set_style "bold" "red"; echo "Task deletion canceled."; set_style "base"
                     fi
                     return
                 fi
@@ -384,15 +384,15 @@ ShowTaskInfo() {
     while true; do
         set_style "bold" "blue" ; echo "How would you like to search for the task ? (ID/Title)"; set_style "base"
         read -r method
-        
+        # You can remove less if you want to see it in the prompt
         case $method in
             "Title"|"title"|"TITLE")
                 set_style "bold" "blue"; echo "Enter the Title of the task you want to view : "; set_style "base"
                 read -r Title
-                task_info=$(sed -n "/^[0-9]*,$Title,/p" ToDo.csv)
+                task_info=$(grep -i -m 1 -E "^[0-9]+,$Title" ToDo.csv)
                 if [ -z "$task_info" ]; then
                     set_style "bold" "red"; set_style "bold" "red"; echo "The task with the title '$Title' couldn't be found ! " ; set_style "base"
-                else
+                else 
                     set_style "bold" "cyan"; echo -e "Task Information :\n\
 +------+----------------------+-------------------------------------------------------------------------+--------------------------+----------------------+----------------------+\n\
 | ID   | Title                | Description                                                             | Location                 | Due Date             | Completion           |\n\
@@ -442,11 +442,15 @@ ShowAllTask() {
             read -r Ndate
         fi
 
-        if date -d "$Ndate" >/dev/null 2>&1; then
-            break
+        if [ -z "$Ndate" ]; then
+            set_style "bold" "red"; echo "Please enter a date !"; set_style "base"
         else
-            set_style "bold" "red"; echo "Invalid date format !!"; set_style "base"
-            Ndate=""
+            if date -d "$Ndate" >/dev/null 2>&1; then
+                break
+            else
+                set_style "bold" "red"; echo "Invalid date format !!"; set_style "base"
+                Ndate=""
+            fi
         fi
     done
 
@@ -454,20 +458,25 @@ ShowAllTask() {
     uncompleted=$(awk -F ',' -v date="$Ndate" '$5 ~ "^" date && $6 != "Completed" {print $2}' ToDo.csv)
     
     merge=$(paste <(echo "$completed") <(echo "$uncompleted"))
+    # With the help of Prof. Youssef
 
-    if [ -n "$completed" ] && [ -n "$uncompleted" ]; then
+    merge=${merge//$'\t'/','}
+    
+    if [ -n "$completed" ] && [ -n "$uncompleted" ]; then # Showing a table with the completed and uncompleted Task
         set_style "bold" "blue"; echo "Tasks:"; set_style "bold" "cyan"
         echo -e "\n\
 +----------------------------------+----------------------------------+\n\
 | Completed Task                   | Uncompleted Task                 |\n\
 +----------------------------------+----------------------------------+"
-while IFS=$'\t' read -r completed uncompleted; do
-        printf "| %-32s | %-32s |\n" "$completed" "$uncompleted"
+while IFS=',' read -r completed uncompleted; do
+        printf "| %-32s | %-32s |\n" "${completed//','/}" "${uncompleted//','/}"
 done <<< "$merge"
-        echo -e "+----------------------------------+----------------------------------+\n"
+echo -e "+----------------------------------+----------------------------------+\n"
         set_style "base"
         return
-    elif [ -z "$completed" ] && [ -n "$uncompleted" ]; then
+
+
+    elif [ -z "$completed" ] && [ -n "$uncompleted" ]; then # Showing a table with the uncompleted Task
         set_style "bold" "blue"; echo "Tasks:"; set_style "bold" "cyan"
         echo -e "\n\
 +----------------------------------+\n\
@@ -479,11 +488,11 @@ $(printf "| %-32s |\n" "$uncompleted")\n\
     set_style "base"
     return
 
-    elif [ -z "$uncompleted" ] && [ -n "$completed" ]; then
+    elif [ -z "$uncompleted" ] && [ -n "$completed" ]; then # Showing a table with the completed Task
         set_style "bold" "blue"; echo "Tasks:"; set_style "bold" "cyan"
         echo -e "\n\
 +----------------------------------+\n\
-| Completed Task                 |\n\
+| Completed Task                   |\n\
 +----------------------------------+\n\
 $(printf "| %-32s |\n" "$completed")\n\
 +----------------------------------+\n"
@@ -494,6 +503,8 @@ $(printf "| %-32s |\n" "$completed")\n\
 
     set_style "bold" "red"; echo "No task for this day !"; set_style "base"
 }
+
+# Function with the menu
 
 Menu () {
 
@@ -580,7 +591,7 @@ case "$1" in
         # If no argument is provided it execute ShowAllTask with the current date
         ShowAllTask "$(date +"%Y-%m-%d")"
         ;;
-    "--help"|"-h")
+    "--help"|"-h") # To show all the options and their usage
         echo -e "Usage: todo [Option]\n\
 Manage your task in a csv file with this command.\n\
 Show completed task and uncompleted task if any of the option is specified.\n\n\
